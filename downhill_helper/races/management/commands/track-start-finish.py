@@ -1,7 +1,6 @@
 import serial
 import logging
 
-from django.conf import settings
 from django.utils import timezone
 from django.core.management.base import BaseCommand
 
@@ -16,9 +15,10 @@ def setup_port(port, is_native):
     if is_native:
         import RPi.GPIO as GPIO
 
+        port_number = int(port)
         GPIO.setmode(GPIO.BOARD)
-        GPIO.setup(port, GPIO.IN)
-        return port
+        GPIO.setup(port_number, GPIO.IN)
+        return port_number
     # serial
     connection = serial.Serial(port, 9600, timeout=1)
     return connection
@@ -56,7 +56,6 @@ class Command(BaseCommand):
         parser.add_argument('-native', '--native', dest='is_native', action='store_true', default=False, help='Is native pin used (or True), or should use serial')
         parser.add_argument('-p', '--port', dest='port', default='/dev/ttyACM0', help='GPIO board pin (if set up as native) or serial port number')
         parser.add_argument('-m', '--mark', dest='mark', default='start', help='Sensor mark, start or finish')
-
 
     def handle(self, is_native, port, mark, *args, **options):
         print('Started registring start-finish. Sensor is set up as: "%s"' % mark)
