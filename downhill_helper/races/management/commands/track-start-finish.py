@@ -70,8 +70,8 @@ class Command(BaseCommand):
                     last_signal_time = timezone.now()
                     has_signal = True
                     print('Catched signal at "%s", sending' % last_signal_time)
-
-                time_delta = last_signal_time - timezone.now()
+                # debouncing
+                time_delta = timezone.now() - last_signal_time
                 if has_signal and time_delta.seconds > SIGNAL_FADE_SECONDS and not is_signal_recieved:
                     has_signal = False
                     print('Ok, faded')
