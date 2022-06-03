@@ -10,7 +10,15 @@ logger = logging.getLogger(__name__)
 SIGNAL_FADE_SECONDS = 10
 
 
+def send_signal_request(time, mark):
+    pass
+
+
 def setup_port(port, is_native):
+    """Sets up the port (serial or native) to read and returns connection info.
+    Serial mode will return the serial.connection object
+    Native pin will just return the pin number.
+    """
     # pin
     if is_native:
         import RPi.GPIO as GPIO
@@ -25,6 +33,8 @@ def setup_port(port, is_native):
 
 
 def close_port(connection, is_native):
+    """Closes the connection with port.
+    """
     # pin
     if is_native:
         import RPi.GPIO as GPIO
@@ -36,6 +46,8 @@ def close_port(connection, is_native):
 
 
 def read_port(connection, is_native):
+    """Reads the port and returns `True` if sensor sending any data.
+    """
     # pin
     if is_native:
         import RPi.GPIO as GPIO
@@ -49,7 +61,10 @@ def read_port(connection, is_native):
 
 
 class Command(BaseCommand):
-    help = 'Tracks a signal of start or finish and sends it to the backend'
+    help = 'Tracks a signal of start or finish from the sensor and sends it to the backend'
+    last_signal_time = timezone.now()
+    connection = None
+    has_signal = False
 
     def add_arguments(self, parser):
         # Named (optional) arguments
@@ -59,24 +74,25 @@ class Command(BaseCommand):
 
     def handle(self, is_native, port, mark, *args, **options):
         print('Started registring start-finish. Sensor is set up as: "%s"' % mark)
-        connection = setup_port(port, is_native)
         running = True
-        has_signal = False
-        last_signal_time = timezone.now()
+        self.connection = setup_port(port, is_native)
         while running:
             try:
-                is_signal_recieved = read_port(connection, is_native)
-                if not has_signal and is_signal_recieved:
-                    last_signal_time = timezone.now()
-                    has_signal = True
-                    print('Catched signal at "%s", sending' % last_signal_time)
-                # debouncing
-                time_delta = timezone.now() - last_signal_time
-                if has_signal and time_delta.seconds > SIGNAL_FADE_SECONDS and not is_signal_recieved:
-                    has_signal = False
-                    print('Ok, faded')
-
+                self.handle_sensor(mark, is_native)
             except KeyboardInterrupt:
                 running = False
-        close_port(connection, is_native)
+        close_port(self.connection, is_native)
         print('Registring start-finish is Done')
+
+    def handle_sensor(self, mark, is_native):
+        is_signal_recieved = read_port(self.connection, is_native)
+        if not self.has_signal and is_signal_recieved:
+            self.last_signal_time = timezone.now()
+            self.has_signal = True
+            print('Catched signal at "%s", sending' % self.last_signal_time)
+            send_signal_request(self.last_signal_time, mark)
+        # debouncing
+        time_delta = timezone.now() - self.last_signal_time
+        if self.has_signal and time_delta.total_seconds() > SIGNAL_FADE_SECONDS and not is_signal_recieved:
+            self.has_signal = False
+            print('Ok, faded')
