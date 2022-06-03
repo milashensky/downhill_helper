@@ -4,7 +4,7 @@ from unittest.mock import patch, MagicMock
 from django.test import SimpleTestCase
 from django.utils import timezone
 
-from races.management.commands import track_start_finish
+from sensors.management.commands import track_start_finish
 
 
 class NormalizeBookTitlesSimpleTests(SimpleTestCase):
@@ -20,7 +20,7 @@ class NormalizeBookTitlesSimpleTests(SimpleTestCase):
         patcher.start()
 
     def test_handle_sensor(self):
-        with patch('races.management.commands.track_start_finish.send_signal_request') as send_signal_request_mock:
+        with patch('sensors.management.commands.track_start_finish.send_signal_request') as send_signal_request_mock:
             serial_mock = MagicMock()
             serial_mock.readline = MagicMock(return_value=b'1\r\n')
             command = track_start_finish.Command()
@@ -68,7 +68,7 @@ class NormalizeBookTitlesSimpleTests(SimpleTestCase):
         self.patch_rpi()
         self.GPIO_mock.HIGH = 1
         self.GPIO_mock.input = MagicMock(return_value=self.GPIO_mock.HIGH)
-        with patch('races.management.commands.track_start_finish.send_signal_request') as send_signal_request_mock:
+        with patch('sensors.management.commands.track_start_finish.send_signal_request') as send_signal_request_mock:
             command = track_start_finish.Command()
             command.connection = 3
             with freezegun.freeze_time('2020-01-02 00:00:00') as last_signal_time:
