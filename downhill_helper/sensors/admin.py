@@ -1,3 +1,12 @@
 from django.contrib import admin
 
-# Register your models here.
+from sensors.models import SensorSignal
+
+
+class SensorSignalAdmin(admin.ModelAdmin):
+    save_on_top = True
+    save_as = True
+    list_fields = ('id', 'sensor_mark', 'signal_registered_at', 'created_at')
+
+
+admin.site.register(SensorSignal, SensorSignalAdmin)
