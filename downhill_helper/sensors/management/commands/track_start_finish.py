@@ -1,6 +1,9 @@
 import serial
 import logging
+import requests
 
+from django.conf import settings
+from django.urls import reverse
 from django.utils import timezone
 from django.core.management.base import BaseCommand
 
@@ -11,7 +14,13 @@ SIGNAL_FADE_SECONDS = 10
 
 
 def send_signal_request(time, mark):
-    pass
+    endpoint = reverse('sensors:signal_api')
+    url = f'{settings.SENSOR_BACKEND_HOST}{endpoint}'
+    data = {
+        'signal_registered_at': str(time),
+        'sensor_mark': mark,
+    }
+    requests.post(url, json=data)
 
 
 def setup_port(port, is_native):
