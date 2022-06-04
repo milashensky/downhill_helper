@@ -69,11 +69,14 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         # Named (optional) arguments
         parser.add_argument('-native', '--native', dest='is_native', action='store_true', default=False, help='Is native pin used (or True), or should use serial')
+        parser.add_argument('-t', '--test', dest='is_test', action='store_true', default=False, help='A flag to test the sensor connection, without sending the data')
         parser.add_argument('-p', '--port', dest='port', default='/dev/ttyACM0', help='GPIO board pin (if set up as native) or serial port number')
         parser.add_argument('-m', '--mark', dest='mark', default='start', help='Sensor mark, start or finish')
 
-    def handle(self, is_native, port, mark, *args, **options):
+    def handle(self, is_native, port, mark, is_test, *args, **options):
         print('Started registring start-finish. Sensor is set up as: "%s"' % mark)
+        if is_test:
+            print('Running in the test mode')
         running = True
         self.connection = setup_port(port, is_native)
         while running:
@@ -84,13 +87,17 @@ class Command(BaseCommand):
         close_port(self.connection, is_native)
         print('Registring start-finish is Done')
 
-    def handle_sensor(self, mark, is_native):
+    def handle_sensor(self, mark, is_native, is_test=False):
         is_signal_recieved = read_port(self.connection, is_native)
         if not self.has_signal and is_signal_recieved:
             self.last_signal_time = timezone.now()
             self.has_signal = True
             print('Catched signal at "%s", sending' % self.last_signal_time)
-            send_signal_request(self.last_signal_time, mark)
+            if is_test:
+                print('skipped, since test mode is on')
+            else:
+                send_signal_request(self.last_signal_time, mark)
+                print('sent')
         # debouncing
         time_delta = timezone.now() - self.last_signal_time
         if self.has_signal and time_delta.total_seconds() > SIGNAL_FADE_SECONDS and not is_signal_recieved:

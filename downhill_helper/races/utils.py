@@ -1,9 +1,20 @@
+import math
 from sensors.models import SensorSignal, START_SENSOR_MARK, FINISH_SENSOR_MARK
-from races.models import RACE_TYPE_OPEN, RaceBracket, BracketContestant, RaceContestantQualification
+from races.models import RACE_TYPE_OPEN, RACE_TYPES_LITERALS, RaceBracket, BracketContestant, RaceContestantQualification
 
 
 def create_initial_brackets(race, type=RACE_TYPE_OPEN, contestants_per_bracket=4):
-    contestants = race.contestants.all().order_by('qualification_number')
+    """Creates an initial brackets after quali, distributing quali leading contestants
+    into different brackets (packs)
+    """
+    type_literal = RACE_TYPES_LITERALS.get(type)
+    type_filter = {
+        f'is_{type_literal}': True,
+    }
+    contestants = race.contestants.filter(**type_filter).order_by('qualification_number')
+    # check the quali is over
+    if contestants.filter(qualification_number=None).exists():
+        return
     # if in last bracket will be less contestants then 1/2 of required -> last bracket will be flooded
     # else, one more braket will be created.
     brackets_number = round(contestants.count() / contestants_per_bracket)
@@ -22,11 +33,36 @@ def create_initial_brackets(race, type=RACE_TYPE_OPEN, contestants_per_bracket=4
             add_to_bracket = 0
 
 
-def create_stage_brackets():
-    pass
+def create_stage_brackets(race, type=RACE_TYPE_OPEN, contestants_per_bracket=4, num_winner_contestants=2):
+    """Creates a next set of brackets from last finished brackets.
+    New brackets will contain `contestants_per_bracket` contestants,
+    `num_winner_contestants` leading contestants will be taken from previous level bracket.
+    """
+    # higher level goes first, to take the highest level
+    brackets = race.brackets.filter(type=type).order_by('-level')
+    if not brackets:
+        return
+    # filtering out lower levels
+    bracket_level = brackets.first().level
+    last_brackets = brackets.filter(level=bracket_level)
+    contestants = BracketContestant.objects.filter(bracket__in=last_brackets, position__lte=num_winner_contestants).order_by('bracket_id')
+    # if some bracket is not finished yet, return
+    if not contestants.count():
+        return
+    next_bracket = RaceBracket.objects.create(race=race, type=type)
+    for contestant in contestants:
+        if next_bracket.contestants.count() == contestants_per_bracket:
+            next_bracket.set_level()
+            next_bracket = RaceBracket.objects.create(race=race, type=type)
+        contestant.bracket.next_bracket = next_bracket
+        contestant.bracket.save()
+        new_contestant = BracketContestant.objects.create(contestant=contestant.contestant, bracket=next_bracket)
+    next_bracket.set_level()
 
 
 def set_qualification_time_by_sensors_data(contestant):
+    """assigns the qualification time to the contestant based on last sensor data
+    """
     start_filters = {
         'contestant__isnull': True,
         'sensor_mark': START_SENSOR_MARK,
@@ -54,6 +90,8 @@ def set_qualification_time_by_sensors_data(contestant):
 
 
 def set_qualification_numbers(race):
+    """assings qualification numbers to the contestants based on their quali times
+    """
     qualifications = RaceContestantQualification.objects.filter(contestant__race=race).order_by('qualification_time_ms')
     i = 1
     contestants = set()

@@ -4,6 +4,12 @@ RACE_TYPE_AMATEUR = 0
 RACE_TYPE_OPEN = 1
 RACE_TYPE_MASTERS = 2
 
+RACE_TYPES_LITERALS = {
+    RACE_TYPE_AMATEUR: 'amateur',
+    RACE_TYPE_OPEN: 'open',
+    RACE_TYPE_MASTERS: 'master',
+}
+
 RACE_TYPES = (
     (RACE_TYPE_AMATEUR, 'Amateur'),
     (RACE_TYPE_OPEN, 'Open'),
@@ -55,24 +61,33 @@ class RaceContestantQualification(models.Model):
     def qualification_time(self):
         return self.qualification_time_ms / 1000
 
+    @property
+    def contestant_name(self):
+        return self.contestant.name
+
+    @property
+    def race(self):
+        return self.contestant.race
+
 
 class RaceBracket(models.Model):
     race = models.ForeignKey(Race, related_name='brackets', on_delete=models.CASCADE)
     next_bracket = models.ForeignKey('self', null=True, related_name='parent_brackets', on_delete=models.SET_NULL)
     type = models.SmallIntegerField(choices=RACE_TYPES, db_index=True)
+    level = models.SmallIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f'{self.id}: {self.level} level {self.type} bracket of {self.race.name}'
+        return f'ID {self.id}: {self.level} level, bracket of {self.race.name} (type: {self.get_type_display()})'
 
-    @property
-    def level(self):
+    def set_level(self):
         level = 0
         parent_bracket = self.parent_brackets.all().first()
         if parent_bracket:
             level = parent_bracket.level + 1
-        return level
+        self.level = level
+        self.save()
 
 
 class BracketContestant(models.Model):
@@ -84,4 +99,20 @@ class BracketContestant(models.Model):
     finished_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
-        return f'{self.position}: {self.contestant.name}'
+        return f'Bracket {self.bracket_id} ({self.bracket.level} level): {self.contestant.name}: {self.position}'
+
+    @property
+    def bracket_level(self):
+        return self.bracket.level
+
+    @property
+    def contestant_name(self):
+        return self.contestant.name
+
+    @property
+    def qualification_number(self):
+        return self.contestant.qualification_number
+
+    @property
+    def helmet_number(self):
+        return self.contestant.helmet_number
