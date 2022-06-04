@@ -1,0 +1,16 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block breadcrumbs %}<div class="breadcrumbs"><a href="{% url 'admin:index' %}">{% trans 'Home' %}</a></div>{% endblock %}
+
+{% block content %}
+
+<p>Race: {{race}}</p>
+<p>This action will clear any existing brackets, assign qualification numbers to the contestants, and create the new ones based on qualification.</p>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input class="default" type="submit" value="Create brackets">
+</form>
+
+{% endblock %}

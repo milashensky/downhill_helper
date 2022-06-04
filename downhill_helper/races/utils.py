@@ -7,7 +7,7 @@ def create_initial_brackets(race, type=RACE_TYPE_OPEN, contestants_per_bracket=4
     """Creates an initial brackets after quali, distributing quali leading contestants
     into different brackets (packs)
     """
-    type_literal = RACE_TYPES_LITERALS.get(type)
+    type_literal = RACE_TYPES_LITERALS.get(int(type))
     type_filter = {
         f'is_{type_literal}': True,
     }
@@ -53,7 +53,7 @@ def create_stage_brackets(race, type=RACE_TYPE_OPEN, contestants_per_bracket=4, 
     for contestant in contestants:
         if next_bracket.contestants.count() == contestants_per_bracket:
             next_bracket.set_level()
-            next_bracket = RaceBracket.objects.create(race=race, type=type)
+            next_bracket = RaceBracket.objects.create(race=race, type=int(type))
         contestant.bracket.next_bracket = next_bracket
         contestant.bracket.save()
         new_contestant = BracketContestant.objects.create(contestant=contestant.contestant, bracket=next_bracket)
@@ -87,6 +87,7 @@ def set_qualification_time_by_sensors_data(contestant):
     start_signal.save()
     end_signal.contestant = contestant_qualification
     end_signal.save()
+    return contestant_qualification
 
 
 def set_qualification_numbers(race):

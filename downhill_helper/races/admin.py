@@ -1,11 +1,38 @@
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.http import HttpResponseRedirect
+from django.urls import reverse
+from django.urls import path
 
 from races.models import RaceContestant, Race, RaceBracket, BracketContestant, RaceContestantQualification
+from races.utils import set_qualification_time_by_sensors_data, create_initial_brackets, create_stage_brackets
+from races.views import CreateInitialBracketsView, CreateStageBracketsView
+
+
+def assign_qualification_time(modeladmin, request, queryset):
+    for contestant in queryset:
+        result = set_qualification_time_by_sensors_data(contestant)
+        if result:
+            messages.success(request, f'assigned "{result}" to "{contestant}"')
+        else:
+            messages.error(request, f'could not assign last sensor time to "{contestant}"')
+
+
+def create_initial_brackets(modeladmin, request, queryset):
+    race = queryset.first()
+    url = reverse('admin:create_initial_brackets_view', kwargs={'race_id': race.id})
+    return HttpResponseRedirect(url)
+
+
+def create_stage_brackets(modeladmin, request, queryset):
+    race = queryset.first()
+    url = reverse('admin:create_stage_brackets_view', kwargs={'race_id': race.id})
+    return HttpResponseRedirect(url)
 
 
 class RaceAdmin(admin.ModelAdmin):
     save_on_top = True
     save_as = True
+    actions = (create_initial_brackets, create_stage_brackets)
 
 
 class RaceContestantAdmin(admin.ModelAdmin):
@@ -15,6 +42,7 @@ class RaceContestantAdmin(admin.ModelAdmin):
     list_editable = ('qualification_number', 'helmet_number')
     search_fields = ('name', 'helmet_number')
     list_filter = ('race__name', 'is_open', 'is_amateur', 'is_master')
+    actions = (assign_qualification_time,)
 
 
 class BracketAdmin(admin.ModelAdmin):
@@ -38,6 +66,18 @@ class RaceContestantQualificationAdmin(admin.ModelAdmin):
     list_filter = ('contestant__race__name',)
 
 
+def get_admin_urls(default_handler):
+    def get_urls():
+        my_urls = [
+            path('create_initial_brackets/<int:race_id>/', CreateInitialBracketsView.as_view(), name='create_initial_brackets_view'),
+            path('create_stage_brackets/<int:race_id>/', CreateStageBracketsView.as_view(), name='create_stage_brackets_view'),
+        ]
+        return my_urls + default_handler()
+    return get_urls
+
+
+get_urls_default = admin.site.get_urls
+admin.site.get_urls = get_admin_urls(get_urls_default)
 admin.site.register(Race, RaceAdmin)
 admin.site.register(RaceContestant, RaceContestantAdmin)
 admin.site.register(RaceBracket, BracketAdmin)

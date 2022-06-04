@@ -55,7 +55,7 @@ class RaceContestantQualification(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f'{self.contestant.name}: {self.qualification_time}'
+        return f'{self.contestant.name}: {self.qualification_time} sec'
 
     @property
     def qualification_time(self):

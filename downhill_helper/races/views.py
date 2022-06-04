@@ -1,0 +1,41 @@
+from django.urls import reverse
+from django.views.generic.edit import FormView
+
+from races.models import Race
+from races.utils import create_initial_brackets, set_qualification_numbers, create_stage_brackets
+from races.forms import CreateInitialBracketsForm, CreateStageBracketsForm
+
+
+class RaceActionMixin:
+
+    def get_race(self):
+        return Race.objects.get(id=self.kwargs.get('race_id'))
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context['race'] = self.get_race()
+        return context
+
+    def get_success_url(self):
+        return reverse('admin:races_race_changelist')
+
+
+class CreateInitialBracketsView(RaceActionMixin, FormView):
+    template_name = 'admin/races/create_initial_brackets.html'
+    form_class = CreateInitialBracketsForm
+
+    def form_valid(self, form):
+        race = self.get_race()
+        set_qualification_numbers(race)
+        create_initial_brackets(race, **form.cleaned_data)
+        return super().form_valid(form)
+
+
+class CreateStageBracketsView(RaceActionMixin, FormView):
+    template_name = 'admin/races/create_stage_brackets.html'
+    form_class = CreateStageBracketsForm
+
+    def form_valid(self, form):
+        race = self.get_race()
+        create_stage_brackets(race, **form.cleaned_data)
+        return super().form_valid(form)
