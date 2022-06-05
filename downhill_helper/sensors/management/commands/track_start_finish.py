@@ -13,12 +13,13 @@ logger = logging.getLogger(__name__)
 SIGNAL_FADE_SECONDS = 10
 
 
-def send_signal_request(time, mark):
+def send_signal_request(time, mark, race_id):
     endpoint = reverse('sensors:signal_api')
     url = f'{settings.SENSOR_BACKEND_HOST}{endpoint}'
     data = {
         'signal_registered_at': str(time),
         'sensor_mark': mark,
+        'race_id': int(race_id),
     }
     requests.post(url, json=data)
 
@@ -77,12 +78,14 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         # Named (optional) arguments
-        parser.add_argument('-native', '--native', dest='is_native', action='store_true', default=False, help='Is native pin used (or True), or should use serial')
+        parser.add_argument('-n', '--native', dest='is_native', action='store_true', default=False, help='Is native pin used (or True), or should use serial')
         parser.add_argument('-t', '--test', dest='is_test', action='store_true', default=False, help='A flag to test the sensor connection, without sending the data')
         parser.add_argument('-p', '--port', dest='port', default='/dev/ttyACM0', help='GPIO board pin (if set up as native) or serial port number')
         parser.add_argument('-m', '--mark', dest='mark', default='start', help='Sensor mark, start or finish')
+        parser.add_argument('-r', '--race_id', dest='race_id', type=int, required=True, help='ID of the race, to attach the signal')
 
-    def handle(self, is_native, port, mark, is_test, *args, **options):
+    def handle(self, is_native, port, mark, is_test, race_id, *args, **options):
+        self.race_id = race_id
         print('Started registring start-finish. Sensor is set up as: "%s"' % mark)
         if is_test:
             print('Running in the test mode')
@@ -105,7 +108,7 @@ class Command(BaseCommand):
             if is_test:
                 print('skipped, since test mode is on')
             else:
-                send_signal_request(self.last_signal_time, mark)
+                send_signal_request(self.last_signal_time, mark, self.race_id)
                 print('sent')
         # debouncing
         time_delta = timezone.now() - self.last_signal_time

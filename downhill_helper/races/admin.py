@@ -1,11 +1,9 @@
 from django.contrib import admin, messages
 from django.http import HttpResponseRedirect
 from django.urls import reverse
-from django.urls import path
 
 from races.models import RaceContestant, Race, RaceBracket, BracketContestant, RaceContestantQualification
 from races.utils import set_qualification_time_by_sensors_data, create_initial_brackets, create_stage_brackets
-from races.views import CreateInitialBracketsView, CreateStageBracketsView
 
 
 def assign_qualification_time(modeladmin, request, queryset):
@@ -66,18 +64,17 @@ class RaceContestantQualificationAdmin(admin.ModelAdmin):
     list_filter = ('contestant__race__name',)
 
 
-def get_admin_urls(default_handler):
-    def get_urls():
-        my_urls = [
-            path('create_initial_brackets/<int:race_id>/', CreateInitialBracketsView.as_view(), name='create_initial_brackets_view'),
-            path('create_stage_brackets/<int:race_id>/', CreateStageBracketsView.as_view(), name='create_stage_brackets_view'),
-        ]
-        return my_urls + default_handler()
-    return get_urls
-
-
-get_urls_default = admin.site.get_urls
-admin.site.get_urls = get_admin_urls(get_urls_default)
+# def get_admin_urls(default_handler):
+#     def get_urls():
+#         my_urls = [
+#
+#         ]
+#         return my_urls + default_handler()
+#     return get_urls
+#
+#
+# get_urls_default = admin.site.get_urls
+# admin.site.get_urls = get_admin_urls(get_urls_default)
 admin.site.register(Race, RaceAdmin)
 admin.site.register(RaceContestant, RaceContestantAdmin)
 admin.site.register(RaceBracket, BracketAdmin)

@@ -16,11 +16,23 @@ Including another URLconf
 from django.contrib import admin
 from django.conf import settings
 from django.urls import path, include
+from races.views import CreateInitialBracketsView, CreateStageBracketsView
+
+
+admin_urls = (
+    [
+        path('create_initial_brackets/<int:race_id>/', CreateInitialBracketsView.as_view(), name='create_initial_brackets_view'),
+        path('create_stage_brackets/<int:race_id>/', CreateStageBracketsView.as_view(), name='create_stage_brackets_view'),
+    ]
+    + admin.site.urls[0],
+    'admin',
+    'admin',
+)
 
 
 urlpatterns = [
     path(settings.BASE_URL, include([
-        path('admin/', admin.site.urls),
+        path('admin/', admin_urls),
         path('api/sensors/', include(('sensors.urls', 'sensors'), namespace='sensors')),
         path('races/', include(('races.urls', 'races'), namespace='races')),
     ])),

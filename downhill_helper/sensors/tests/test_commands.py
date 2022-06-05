@@ -25,10 +25,11 @@ class NormalizeBookTitlesSimpleTests(SimpleTestCase):
             serial_mock.readline = MagicMock(return_value=b'1\r\n')
             command = track_start_finish.Command()
             command.connection = serial_mock
+            command.race_id = 1
             with freezegun.freeze_time('2020-01-02 00:00:00') as last_signal_time:
                 command.last_signal_time = last_signal_time
                 command.handle_sensor('start', False)
-                send_signal_request_mock.assert_called_with(timezone.now(), 'start')
+                send_signal_request_mock.assert_called_with(timezone.now(), 'start', 1)
             send_signal_request_mock.reset_mock()
 
             serial_mock.readline = MagicMock(return_value=b'')
@@ -51,7 +52,7 @@ class NormalizeBookTitlesSimpleTests(SimpleTestCase):
             with freezegun.freeze_time('2020-01-02 00:00:40'):
                 command.handle_sensor('start', False)
                 # signal
-                send_signal_request_mock.assert_called_with(timezone.now(), 'start')
+                send_signal_request_mock.assert_called_with(timezone.now(), 'start', 1)
             send_signal_request_mock.reset_mock()
 
             with freezegun.freeze_time('2020-01-02 00:01:00'):
@@ -71,10 +72,11 @@ class NormalizeBookTitlesSimpleTests(SimpleTestCase):
         with patch('sensors.management.commands.track_start_finish.send_signal_request') as send_signal_request_mock:
             command = track_start_finish.Command()
             command.connection = 3
+            command.race_id = 1
             with freezegun.freeze_time('2020-01-02 00:00:00') as last_signal_time:
                 command.last_signal_time = last_signal_time
                 command.handle_sensor('start', True)
-                send_signal_request_mock.assert_called_with(timezone.now(), 'start')
+                send_signal_request_mock.assert_called_with(timezone.now(), 'start', 1)
             send_signal_request_mock.reset_mock()
 
             self.GPIO_mock.input = MagicMock(return_value=0)

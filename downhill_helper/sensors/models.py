@@ -1,5 +1,5 @@
 from django.db import models
-from races.models import RaceContestantQualification
+from races.models import RaceContestantQualification, Race
 
 START_SENSOR_MARK = 'start'
 FINISH_SENSOR_MARK = 'finish'
@@ -11,6 +11,7 @@ SENSOR_MARKS = (
 
 
 class SensorSignal(models.Model):
+    race = models.ForeignKey(Race, related_name='signals', on_delete=models.CASCADE)
     sensor_mark = models.CharField(max_length=32, choices=SENSOR_MARKS)
     signal_registered_at = models.DateTimeField()
     contestant = models.ForeignKey(RaceContestantQualification, null=True, related_name='signals', on_delete=models.SET_NULL)
