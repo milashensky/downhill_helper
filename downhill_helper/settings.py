@@ -17,6 +17,10 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PROJECT_ROOT = os.path.dirname(__file__)
 PROJECT_NAME = os.path.basename(PROJECT_ROOT)
 
+STORAGE_ROOT = os.path.join(BASE_DIR, '..', 'storage')
+MEDIA_ROOT = os.path.join(STORAGE_ROOT, 'media')
+STATIC_ROOT = os.path.join(STORAGE_ROOT, 'static')
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 

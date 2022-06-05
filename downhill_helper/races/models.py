@@ -1,4 +1,5 @@
 from django.db import models
+from common.utils import upload_to
 
 RACE_TYPE_AMATEUR = 0
 RACE_TYPE_OPEN = 1
@@ -19,11 +20,35 @@ RACE_TYPES = (
 
 class Race(models.Model):
     name = models.CharField(max_length=512)
+    slug = models.CharField(max_length=50, unique=True, blank=True)
+    background_image = models.FileField(null=True, upload_to=upload_to)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.name
+
+    @property
+    def background_image_url(self):
+        if not self.background_image:
+            return None
+        return self.background_image.url
+
+    @property
+    def is_qualification_open(self):
+        return RaceContestantQualification.objects.filter(contestant__race_id=self.id).exists()
+
+    @property
+    def has_masters(self):
+        return RaceBracket.objects.filter(race_id=self.id, type=RACE_TYPE_MASTERS).exists()
+
+    @property
+    def has_open(self):
+        return RaceBracket.objects.filter(race_id=self.id, type=RACE_TYPE_OPEN).exists()
+
+    @property
+    def has_amateurs(self):
+        return RaceBracket.objects.filter(race_id=self.id, type=RACE_TYPE_AMATEUR).exists()
 
 
 class RaceContestant(models.Model):
@@ -68,6 +93,10 @@ class RaceContestantQualification(models.Model):
     @property
     def race(self):
         return self.contestant.race
+
+    @property
+    def helmet_number(self):
+        return self.contestant.helmet_number
 
 
 class RaceBracket(models.Model):
