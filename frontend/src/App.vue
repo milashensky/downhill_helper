@@ -1,16 +1,29 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <div v-if="race.name">
+  </div>
+  <div v-else>
+    Loading...
+  </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld';
+import { Race } from 'utils/resources';
 
 
 export default {
   name: 'App',
-  components: {
-    HelloWorld,
+  data: () => ({
+    race: {},
+  }),
+  methods: {
+    async getRace() {
+      const slug = 'test_race';
+      const race = await Race.get(slug);
+      this.race = race;
+    },
+  },
+  created() {
+    this.getRace();
   },
 };
 </script>

@@ -16,7 +16,7 @@ class RaceApi(CsrfExemptMixin, SerializedView):
 
 
 class QualificationApi(CsrfExemptMixin, SerializedView):
-    fields = ('id', 'contestant_name', 'qualification_time', 'helmet_number')
+    fields = ('id', 'contestant_id', 'contestant_name', 'qualification_time', 'helmet_number')
 
     def get(self, request, race_slug):
         race = get_object_or_404(Race, slug=race_slug)

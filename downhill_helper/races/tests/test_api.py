@@ -39,6 +39,7 @@ class ApiTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), [{
             'id': contestant_quali.id,
+            'contestant_id': contestant_quali.contestant_id,
             'contestant_name': contestant_quali.contestant_name,
             'qualification_time': contestant_quali.qualification_time,
             'helmet_number': contestant_quali.helmet_number,

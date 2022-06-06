@@ -29,7 +29,7 @@ class NormalizeBookTitlesSimpleTests(SimpleTestCase):
             with freezegun.freeze_time('2020-01-02 00:00:00') as last_signal_time:
                 command.last_signal_time = last_signal_time
                 command.handle_sensor('start', False)
-                send_signal_request_mock.assert_called_with(timezone.now(), 'start', 1)
+                send_signal_request_mock.assert_called_with(time=timezone.now(), mark='start', race_id=1)
             send_signal_request_mock.reset_mock()
 
             serial_mock.readline = MagicMock(return_value=b'')
@@ -52,7 +52,7 @@ class NormalizeBookTitlesSimpleTests(SimpleTestCase):
             with freezegun.freeze_time('2020-01-02 00:00:40'):
                 command.handle_sensor('start', False)
                 # signal
-                send_signal_request_mock.assert_called_with(timezone.now(), 'start', 1)
+                send_signal_request_mock.assert_called_with(time=timezone.now(), mark='start', race_id=1)
             send_signal_request_mock.reset_mock()
 
             with freezegun.freeze_time('2020-01-02 00:01:00'):
@@ -76,7 +76,7 @@ class NormalizeBookTitlesSimpleTests(SimpleTestCase):
             with freezegun.freeze_time('2020-01-02 00:00:00') as last_signal_time:
                 command.last_signal_time = last_signal_time
                 command.handle_sensor('start', True)
-                send_signal_request_mock.assert_called_with(timezone.now(), 'start', 1)
+                send_signal_request_mock.assert_called_with(time=timezone.now(), mark='start', race_id=1)
             send_signal_request_mock.reset_mock()
 
             self.GPIO_mock.input = MagicMock(return_value=0)

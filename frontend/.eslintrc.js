@@ -34,6 +34,7 @@ module.exports = {
       },
     ],
     'no-console': ['warn', { 'allow': ['warn', 'error'] }],
+    'vuejs-accessibility/click-events-have-key-events': 0,
     'no-multiple-empty-lines': [
       'error',
       {

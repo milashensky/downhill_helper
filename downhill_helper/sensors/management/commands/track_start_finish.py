@@ -1,6 +1,7 @@
 import serial
 import logging
 import requests
+import threading
 
 from django.conf import settings
 from django.urls import reverse
@@ -13,7 +14,10 @@ logger = logging.getLogger(__name__)
 SIGNAL_FADE_SECONDS = 10
 
 
-def send_signal_request(time, mark, race_id):
+def send_signal_request(time, mark, race_id, retries=0):
+    if retries > settings.MAX_SEND_SIGNAL_RERIES:
+        print(f'too much retries for time "{time}", quiting')
+        return
     endpoint = reverse('sensors:signal_api')
     url = f'{settings.SENSOR_BACKEND_HOST}{endpoint}'
     data = {
@@ -21,7 +25,14 @@ def send_signal_request(time, mark, race_id):
         'sensor_mark': mark,
         'race_id': int(race_id),
     }
-    requests.post(url, json=data)
+
+    try:
+        requests.post(url, json=data)
+        print(f'signal with time "{time}" has been successfuly sent')
+    except Exception as e:
+        print('error "%s", retrying' % e)
+        retries += 1
+        send_signal_request(time, mark, race_id, retries)
 
 
 def setup_port(port, is_native):
@@ -93,7 +104,7 @@ class Command(BaseCommand):
         self.connection = setup_port(port, is_native)
         while running:
             try:
-                self.handle_sensor(mark, is_native)
+                self.handle_sensor(mark, is_native, is_test)
             except KeyboardInterrupt:
                 running = False
         close_port(self.connection, is_native)
@@ -106,10 +117,19 @@ class Command(BaseCommand):
             self.has_signal = True
             print('Catched signal at "%s", sending' % self.last_signal_time)
             if is_test:
-                print('skipped, since test mode is on')
+                print('sending is skipped, since test mode is on')
             else:
-                send_signal_request(self.last_signal_time, mark, self.race_id)
-                print('sent')
+                thread = threading.Thread(
+                    target=send_signal_request,
+                    kwargs={
+                        'time': self.last_signal_time,
+                        'mark': mark,
+                        'race_id': self.race_id,
+                    },
+                    daemon=True,
+                )
+                thread.start()
+                print('sending')
         # debouncing
         time_delta = timezone.now() - self.last_signal_time
         if self.has_signal and time_delta.total_seconds() > SIGNAL_FADE_SECONDS and not is_signal_recieved:

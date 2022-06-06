@@ -133,6 +133,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 SENSOR_BACKEND_HOST = 'http://localhost:8008'
+MAX_SEND_SIGNAL_RERIES = 20
 
 
 ###########################
