@@ -1,0 +1,25 @@
+[{
+    "id": 1,
+    "contestant_id": 1,
+    "contestant_name": "Milash",
+    "qualification_time": 60.0,
+    "helmet_number": 12
+}, {
+    "id": 2,
+    "contestant_id": 2,
+    "contestant_name": "Borya",
+    "qualification_time": 59.998,
+    "helmet_number": 11
+}, {
+    "id": 11,
+    "contestant_id": 11,
+    "contestant_name": "vitya",
+    "qualification_time": 200.0,
+    "helmet_number": 20
+}, {
+    "id": 12,
+    "contestant_id": 11,
+    "contestant_name": "vitya",
+    "qualification_time": 8.679,
+    "helmet_number": 20
+}]
