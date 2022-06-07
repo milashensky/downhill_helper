@@ -1,6 +1,6 @@
 from django.test import TestCase
 from sensors.models import SensorSignal, START_SENSOR_MARK, FINISH_SENSOR_MARK
-from races.models import Race, RaceContestant, BracketContestant, RaceBracket, BracketContestant, RaceContestantQualification
+from races.models import Race, RaceContestant, RaceBracket
 from races.utils import set_qualification_time_by_sensors_data, set_qualification_numbers, create_initial_brackets, create_stage_brackets
 
 
@@ -18,17 +18,18 @@ class UtilsTests(TestCase):
         SensorSignal.objects.create(race=race, sensor_mark=FINISH_SENSOR_MARK, signal_registered_at='2020-01-02 00:01:00')
         SensorSignal.objects.create(race=race, sensor_mark=FINISH_SENSOR_MARK, signal_registered_at='2020-01-02 00:01:01')
         SensorSignal.objects.create(race=race, sensor_mark=FINISH_SENSOR_MARK, signal_registered_at='2020-01-02 00:01:02')
-        # should take first free start signal time (no one else in on a track)
+        # should take last free start signal time,
         # and last end signal after a start time
         set_qualification_time_by_sensors_data(contestant1)
-        self.assertEqual(contestant1.best_qualification_time, 62.0)
+        self.assertEqual(contestant1.best_qualification_time, 60.0)
 
         SensorSignal.objects.create(race=race, sensor_mark=START_SENSOR_MARK, signal_registered_at='2020-01-02 00:01:03')
         SensorSignal.objects.create(race=race, sensor_mark=FINISH_SENSOR_MARK, signal_registered_at='2020-01-02 00:01:50')
         set_qualification_time_by_sensors_data(contestant2)
         self.assertEqual(contestant2.best_qualification_time, 47.0)
+        # nothing has been changed, the signal has been taken
         set_qualification_time_by_sensors_data(contestant1)
-        self.assertEqual(contestant1.best_qualification_time, 62.0)
+        self.assertEqual(contestant1.best_qualification_time, 60.0)
         self.assertEqual(contestant1.qualifications.count(), 1)
 
         SensorSignal.objects.create(race=race, sensor_mark=START_SENSOR_MARK, signal_registered_at='2020-01-02 00:01:51')
@@ -84,6 +85,9 @@ class UtilsTests(TestCase):
         self.assertTrue(contestant4.id in first_contestants_ids)
         self.assertTrue(contestant7.id in first_contestants_ids)
         self.assertTrue(contestant10.id in first_contestants_ids)
+        create_initial_brackets(race, contestants_per_bracket=40)
+        # all brackets are cleared up and one created instead
+        self.assertEqual(brackets.count(), 1)
 
     def test_create_stage_brackets(self):
         race = Race.objects.create(name='speedy')
