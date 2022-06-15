@@ -1,0 +1,40 @@
+{
+  "name": "downhill_camera_sensor_helper",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "elint": "vue-cli-service lint",
+    "test": "vue-cli-service test:unit --no-cache",
+    "eslint:diff": "./node_modules/.bin/eslint $(git status -s ./src | grep -vE '(\\s?)D' | grep -iE '.(js|jsx|vue)$' | awk '{if ($4) { print $4 } else if ($1) print $2 }')"
+  },
+  "dependencies": {
+    "core-js": "^3.8.3",
+    "js-cookie": "^3.0.1",
+    "vue": "^3.2.13"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.12.16",
+    "@babel/eslint-parser": "^7.12.16",
+    "@vue/cli-plugin-babel": "~5.0.0",
+    "@vue/cli-plugin-eslint": "~5.0.0",
+    "@vue/cli-plugin-unit-jest": "^5.0.4",
+    "@vue/cli-service": "~5.0.0",
+    "@vue/eslint-config-airbnb": "^6.0.0",
+    "@vue/vue3-jest": "^28.0.0",
+    "eslint": "^7.32.0",
+    "eslint-import-resolver-alias": "^1.1.2",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-jest": "^26.5.3",
+    "eslint-plugin-vue": "^8.0.3",
+    "eslint-plugin-vuejs-accessibility": "^1.1.0",
+    "node-sass": "^7.0.1",
+    "postcss-loader": "^7.0.0",
+    "sass": "^1.52.2",
+    "sass-loader": "^13.0.0"
+  },
+  "browser": {
+    "crypto": false
+  }
+}
