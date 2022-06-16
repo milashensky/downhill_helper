@@ -5,6 +5,7 @@ const { defineConfig } = require('@vue/cli-service');
 
 module.exports = defineConfig({
   transpileDependencies: true,
+  publicPath: '/dhhelper/camera-sensor/',
   devServer: {
     allowedHosts: 'all',
     https: true,

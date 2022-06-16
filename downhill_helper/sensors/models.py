@@ -14,7 +14,7 @@ class SensorSignal(models.Model):
     race = models.ForeignKey(Race, related_name='signals', on_delete=models.CASCADE)
     sensor_mark = models.CharField(max_length=32, choices=SENSOR_MARKS)
     signal_registered_at = models.DateTimeField()
-    contestant = models.ForeignKey(RaceContestantQualification, null=True, related_name='signals', on_delete=models.SET_NULL)
+    contestant = models.ForeignKey(RaceContestantQualification, null=True, blank=True, related_name='signals', on_delete=models.SET_NULL)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
