@@ -1,6 +1,6 @@
 <template>
   <div class="camera-screen" ref="container">
-    <div class="controls">
+    <div class="controls" v-show="!shouldCheckCrossing">
       <label for="camera" v-if="options.length > 1">
         <select
           @change="getCameraStream"
@@ -18,14 +18,16 @@
       </label>
       <button type="button" class="btn submit" @click="startDetection">Start detection</button>
       <button type="button" class="btn" @click="$emit('goBack')">Back</button>
-      <p>
-        Detection status:
-        <span v-if="shouldCheckCrossing">Running</span>
-        <span v-else>Waiting</span>
-      </p>
     </div>
 
     <div class="video-container">
+      <div class="info-overlay">
+        <p class="status">
+          Detection status:
+          <span v-if="shouldCheckCrossing">Running</span>
+          <span v-else>Waiting</span>
+        </p>
+      </div>
       <canvas ref="canvas" />
       <video
         ref="video"
@@ -34,7 +36,7 @@
         type="video/mp4"
         autoplay="autoplay"
       />
-      <!-- :src="`${publicPath}video_2022-06-15_12-11-10.mp4`" -->
+      <!-- :src="`${publicPath}video_2022-06-18_13-11-04.mp4`" -->
       <DetectedFramesList :detected="detected" @deleteCrossing="deleteCrossing" />
     </div>
 
@@ -55,10 +57,11 @@ let bgSubstractor = null;
 let cvVideoCapture = null;
 let kernel = null;
 
+const KERNEL_SIZE = 10;
 const DEBOUNCE_TIME_MS = 10000;
-const BG_SUBSTRACTOR_MEMORY = 100;
-const BG_SUBSTRACTOR_THRESHOLD = 150;
-const MIN_AREA = 3000;
+const BG_SUBSTRACTOR_MEMORY = 300;
+const BG_SUBSTRACTOR_THRESHOLD = 200;
+const MIN_AREA = 1500;
 const FPS = 60;
 
 
@@ -72,7 +75,7 @@ const getBoundingRectFromContour = contour => {
 
 const checkCrossing = (rect, threshold) => {
   const { x, width } = rect;
-  return x <= threshold || (x + width) >= threshold;
+  return (x + KERNEL_SIZE) <= threshold && (x + width - KERNEL_SIZE) >= threshold;
 };
 
 
@@ -204,7 +207,7 @@ export default {
       cvVideoCapture = new cv.VideoCapture(this.$refs.video);
       frame = new cv.Mat(HEIGHT, WIDTH, cv.CV_8UC4);
       fgMask = new cv.Mat(HEIGHT, WIDTH, cv.CV_8U);
-      kernel = cv.Mat.ones(5, 5, cv.CV_8U);
+      kernel = cv.Mat.ones(KERNEL_SIZE, KERNEL_SIZE, cv.CV_8U);
       bgSubstractor = new cv.BackgroundSubtractorMOG2(BG_SUBSTRACTOR_MEMORY, BG_SUBSTRACTOR_THRESHOLD, true);
 
       this.timeout = setTimeout(this.processFrame, 0);
@@ -220,6 +223,7 @@ export default {
         cvVideoCapture.read(frame);
         bgSubstractor.apply(frame, fgMask);
         // de-noise
+        cv.morphologyEx(fgMask, fgMask, cv.MORPH_CLOSE, kernel, new cv.Point(-1, -1), 1);
         cv.morphologyEx(fgMask, fgMask, cv.MORPH_CLOSE, kernel, new cv.Point(-1, -1), 2);
         const contours = new cv.MatVector();
         cv.findContours(fgMask, contours, new cv.Mat(), cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
@@ -253,9 +257,7 @@ export default {
 
 
     processDetection(rect) {
-      const { width } = this.$refs.video;
-      const point1 = new cv.Point(rect.x, rect.y);
-      const point2 = new cv.Point(rect.x + rect.width, rect.y + rect.height);
+      const { width } = this.$refs.canvas;
       const isCrossing = checkCrossing(rect, width / 2);
       if (isCrossing && this.shouldCheckCrossing) {
         const time = new Date();
@@ -267,6 +269,8 @@ export default {
         };
         this.debounceCrossingCheck();
       }
+      const point1 = new cv.Point(rect.x, rect.y);
+      const point2 = new cv.Point(rect.x + rect.width, rect.y + rect.height);
       cv.rectangle(frame, point1, point2, [255, 0, 255, 255], 2, cv.LINE_AA, 0);
     },
 
@@ -283,7 +287,8 @@ export default {
       return new Promise(resolve => {
         const check = () => {
           this.timeout = setTimeout(() => {
-            if (window.cv && this.stream) {
+            const ready = this.$refs.video.src || this.stream;
+            if (window.cv && ready) {
               cv = window.cv;
               resolve();
               return;
@@ -354,5 +359,14 @@ export default {
     flex-direction: column;
     z-index: 200;
   }
+}
+
+.info-overlay {
+  position: absolute;
+  color: white;
+  top: 0;
+  display: flex;
+  width: 100%;
+  align-items: center;
 }
 </style>
