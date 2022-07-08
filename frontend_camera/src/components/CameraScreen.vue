@@ -60,9 +60,9 @@ let kernel = null;
 const KERNEL_SIZE = 10;
 const DEBOUNCE_TIME_MS = 10000;
 const BG_SUBSTRACTOR_MEMORY = 300;
-const BG_SUBSTRACTOR_THRESHOLD = 200;
-const MIN_AREA = 1500;
-const FPS = 60;
+const BG_SUBSTRACTOR_THRESHOLD = 100;
+const MIN_AREA = 350;
+const FPS = 80;
 
 
 const getBoundingRectFromContour = contour => {
@@ -88,7 +88,7 @@ export default {
   data: () => ({
     video: null,
     stream: null,
-    selectedCamera: Cookies.get('camera'),
+    selectedCamera: null,
     timeout: null,
     publicPath: process.env.BASE_URL,
     detected: {},
@@ -317,6 +317,7 @@ export default {
 
 
   mounted() {
+    this.selectedCamera = Cookies.get('camera');
     this.initVideoCapture();
     this.cvIsReady().then(this.initMotionDetection);
   },
